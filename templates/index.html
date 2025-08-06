@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Heat Transfer Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <h2>🔥 Heat Transfer Prediction Form</h2>
+    <form method="POST" action="/predict">
+        Thermal Conductivity: <input type="number" name="thermalcond" step="0.1" required><br><br>
+        Source Temperature: <input type="number" name="sourcetemp" step="0.1" required><br><br>
+        Ambient Temperature: <input type="number" name="ambienttemp" step="0.1" required><br><br>
+        Block Size: <input type="number" name="blocksize" step="0.1" required><br><br>
+        <input type="submit" value="Predict">
+    </form>
+
+    {% if result %}
+        <h3>📊 Prediction Results:</h3>
+        Max Temp: {{ max_temp }} °C<br>
+        Avg Temp: {{ avg_temp }} °C<br>
+        Center Temp: {{ center_temp }} °C<br>
+        Efficiency: {{ efficiency }}%<br>
+        Status: <b>{{ status }}</b>
+    {% endif %}
+</body>
+</html>
