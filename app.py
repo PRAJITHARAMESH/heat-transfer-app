@@ -1,33 +1,41 @@
 from flask import Flask, render_template, request
 import joblib
+import numpy as np
 
 app = Flask(__name__)
 
-# Load the model and scaler
+# Load your trained model
 model = joblib.load("model.pkl")
-scaler = joblib.load("scaler.pkl")
+# If you're using scaling:
+try:
+    scaler = joblib.load("scaler.pkl")
+    use_scaler = True
+except:
+    use_scaler = False
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=["POST"])
 def predict():
-    # Read input from form
-    inputs = [
-        float(request.form['thermalcond']),
-        float(request.form['sourcetemp']),
-        float(request.form['ambienttemp']),
-        float(request.form['blocksize'])
-    ]
+    # Get user input
+    thermalcond = float(request.form['thermalcond'])
+    sourcetemp = float(request.form['sourcetemp'])
+    ambienttemp = float(request.form['ambienttemp'])
+    blocksize = float(request.form['blocksize'])
 
-    # Scale and predict
-    input_scaled = scaler.transform([inputs])
-    prediction = model.predict(input_scaled)[0]
+    input_data = np.array([[thermalcond, sourcetemp, ambienttemp, blocksize]])
 
+    # Apply scaler if available
+    if use_scaler:
+        input_data = scaler.transform(input_data)
+
+    # Make prediction
+    prediction = model.predict(input_data)[0]
     max_temp, avg_temp, center_temp = prediction
 
-    # Status logic
+    # Recommendation logic
     if avg_temp < 30:
         status = "❄️ Low – No coolant needed"
     elif 30 <= avg_temp <= 45 and max_temp < 75:
@@ -39,9 +47,9 @@ def predict():
     else:
         status = "❓ Uncertain"
 
-    efficiency = round((inputs[1] - avg_temp) / inputs[1] * 100, 2)
+    efficiency = round((sourcetemp - avg_temp) / sourcetemp * 100, 2)
 
-    return render_template('index.html',
+    return render_template("index.html",
         result=True,
         max_temp=round(max_temp, 2),
         avg_temp=round(avg_temp, 2),

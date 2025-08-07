@@ -4,26 +4,26 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import joblib
 
-# Load dataset
-data = pd.read_csv("heat_transfer_dataset.csv")
+# 🔹 Step 1: Load your dataset
+data = pd.read_csv("heat_transfer_dataset.csv")  # Ensure this CSV file is in the same folder
 
-# Features and labels
+# 🔹 Step 2: Define input features and target outputs
 X = data[["ThermalCond", "SourceTemp", "AmbientTemp", "BlockSize"]]
 y = data[["MaxTemp", "AvgTemp", "CenterTemp"]]
 
-# Scale the input
+# 🔹 Step 3: Scale the input features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Train-test split
+# 🔹 Step 4: Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
-# Train model
+# 🔹 Step 5: Train Random Forest model
 model = RandomForestRegressor(n_estimators=200, max_depth=5, random_state=42)
 model.fit(X_train, y_train)
 
-# Save model and scaler
+# 🔹 Step 6: Save the model and the scaler
 joblib.dump(model, "model.pkl")
 joblib.dump(scaler, "scaler.pkl")
 
-print("✅ model.pkl and scaler.pkl saved successfully!")
+print("✅ model.pkl and scaler.pkl saved successfully in your current folder.")

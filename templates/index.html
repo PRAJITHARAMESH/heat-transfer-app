@@ -1,39 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Capstone ML with Heat Transfer</title>
+    <title>Heat Transfer Predictor</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="header">
-        Capstone ML with Heat Transfer
-    </div>
+    <h2>🔥 Heat Transfer Predictor</h2>
 
-    <div class="container">
-        <form method="post">
-            <label for="thermal_cond">Thermal Conductivity:</label>
-            <input type="number" step="any" id="thermal_cond" name="thermal_cond" required>
+    <form method="POST" action="/predict">
+        <input type="number" name="thermalcond" placeholder="Thermal Conductivity" required><br>
+        <input type="number" name="sourcetemp" placeholder="Source Temperature" required><br>
+        <input type="number" name="ambienttemp" placeholder="Ambient Temperature" required><br>
+        <input type="number" name="blocksize" placeholder="Block Size" required><br>
+        <input type="submit" value="Predict">
+    </form>
 
-            <label for="source_temp">Source Temperature:</label>
-            <input type="number" step="any" id="source_temp" name="source_temp" required>
-
-            <label for="ambient_temp">Ambient Temperature:</label>
-            <input type="number" step="any" id="ambient_temp" name="ambient_temp" required>
-
-            <label for="block_size">Block Size:</label>
-            <input type="number" step="any" id="block_size" name="block_size" required>
-
-            <button type="submit">Predict</button>
-        </form>
-
-        {% if prediction %}
-        <div class="result">
-            🔥 Max Temp: {{ prediction[0] }}<br>
-            🌡️ Avg Temp: {{ prediction[1] }}<br>
-            🎯 Center Temp: {{ prediction[2] }}
-        </div>
-        {% endif %}
-    </div>
+    {% if result %}
+        <h3>Max Temp: {{ max_temp }} °C</h3>
+        <h3>Avg Temp: {{ avg_temp }} °C</h3>
+        <h3>Center Temp: {{ center_temp }} °C</h3>
+        <h3>Efficiency: {{ efficiency }}%</h3>
+        <h3>Status: {{ status }}</h3>
+    {% endif %}
 </body>
 </html>
