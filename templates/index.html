@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Capstone ML with Heat Transfer</title>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Heat Transfer App</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
+<center>
     <h2>🔥Capstone ML with Heat Transfer Predictor</h2>
+<center>
 
     <form method="POST" action="/predict">
         <input type="number" name="thermalcond" placeholder="Thermal Conductivity" required><br>
