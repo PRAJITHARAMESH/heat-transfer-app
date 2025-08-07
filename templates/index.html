@@ -1,29 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <center>
+    <meta charset="UTF-8">
     <title>Capstone ML with Heat Transfer</title>
-</center>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
-    <h2>🔥 Heat Transfer Prediction Form</h2>
-    <form method="POST" action="/predict">
-        Thermal Conductivity: <input type="number" name="thermalcond" step="0.1" required><br><br>
-        Source Temperature: <input type="number" name="sourcetemp" step="0.1" required><br><br>
-        Ambient Temperature: <input type="number" name="ambienttemp" step="0.1" required><br><br>
-        Block Size: <input type="number" name="blocksize" step="0.1" required><br><br>
-        <input type="submit" value="Predict">
-    </form>
+    <div class="header">
+        Capstone ML with Heat Transfer
+    </div>
 
-    {% if result %}
-        <h3>📊 Prediction Results:</h3>
-        Max Temp: {{ max_temp }} °C<br>
-        Avg Temp: {{ avg_temp }} °C<br>
-        Center Temp: {{ center_temp }} °C<br>
-        Efficiency: {{ efficiency }}%<br>
-        Status: <b>{{ status }}</b>
-    {% endif %}
+    <div class="container">
+        <form method="post">
+            <label for="thermal_cond">Thermal Conductivity:</label>
+            <input type="number" step="any" id="thermal_cond" name="thermal_cond" required>
+
+            <label for="source_temp">Source Temperature:</label>
+            <input type="number" step="any" id="source_temp" name="source_temp" required>
+
+            <label for="ambient_temp">Ambient Temperature:</label>
+            <input type="number" step="any" id="ambient_temp" name="ambient_temp" required>
+
+            <label for="block_size">Block Size:</label>
+            <input type="number" step="any" id="block_size" name="block_size" required>
+
+            <button type="submit">Predict</button>
+        </form>
+
+        {% if prediction %}
+        <div class="result">
+            🔥 Max Temp: {{ prediction[0] }}<br>
+            🌡️ Avg Temp: {{ prediction[1] }}<br>
+            🎯 Center Temp: {{ prediction[2] }}
+        </div>
+        {% endif %}
+    </div>
 </body>
 </html>
