@@ -9,11 +9,9 @@ body {
 h2 {
     color: #fff;
     background: #0077b6;
-    padding: 10px 20px;
+    padding: 10px;
     border-radius: 8px;
     display: inline-block;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 form {
@@ -26,11 +24,10 @@ form {
 }
 
 input[type=number] {
-    margin: 10px;
-    padding: 12px;
+    margin: 8px;
+    padding: 10px;
     border-radius: 6px;
     border: 1px solid #0077b6;
-    width: 220px;
 }
 
 input[type=submit] {
@@ -42,25 +39,35 @@ input[type=submit] {
     cursor: pointer;
     border-radius: 6px;
     font-size: 16px;
-    transition: 0.3s ease;
 }
 
 input[type=submit]:hover {
     background: #023e8a;
 }
 
-.result-box {
-    background: #ffffffdd;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 30px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    display: inline-block;
-    color: #000;  /* 🔥 Output color black */
+h3 {
+    margin-top: 20px;
+    color: #fff;
 }
 
-h3 {
-    margin: 10px 0;
-    color: #000;  /* 🔥 Force black text */
-    font-weight: bold;
+a.button {
+    display: inline-block;
+    background: #023e8a;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-top: 15px;
+}
+
+a.button:hover {
+    background: #0077b6;
+}
+
+.warning {
+    background-color: #ffcccc;
+    color: #b30000;
+    padding: 10px;
+    border-radius: 5px;
+    display: inline-block;
 }
