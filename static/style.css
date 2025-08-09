@@ -1,53 +1,39 @@
 body {
     font-family: Arial, sans-serif;
-    background: linear-gradient(to right, #4facfe, #00f2fe);
+    background-color: #f8f9fa;
     text-align: center;
-    padding: 30px;
-    color: #333;
+    padding: 20px;
 }
 
 h2 {
-    color: #fff;
-    background: #0077b6;
-    padding: 10px;
-    border-radius: 8px;
+    color: #023e8a;
+}
+
+label {
+    font-weight: bold;
     display: inline-block;
+    width: 200px;
+    text-align: right;
 }
 
-form {
-    background: #ffffffcc;
-    padding: 20px;
-    border-radius: 12px;
-    display: inline-block;
-    margin-top: 20px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+input[type="number"] {
+    padding: 6px;
+    margin: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
-input[type=number] {
-    margin: 8px;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #0077b6;
-}
-
-input[type=submit] {
-    background: #0077b6;
+input[type="submit"] {
+    background-color: #0077b6;
     color: white;
+    padding: 10px 20px;
     border: none;
-    padding: 12px 20px;
-    margin-top: 15px;
-    cursor: pointer;
     border-radius: 6px;
-    font-size: 16px;
+    cursor: pointer;
 }
 
-input[type=submit]:hover {
-    background: #023e8a;
-}
-
-h3 {
-    margin-top: 20px;
-    color: #fff;
+input[type="submit"]:hover {
+    background-color: #023e8a;
 }
 
 a.button {
@@ -65,9 +51,22 @@ a.button:hover {
 }
 
 .warning {
-    background-color: #ffcccc;
-    color: #b30000;
-    padding: 10px;
-    border-radius: 5px;
-    display: inline-block;
+    color: red;
+    font-weight: bold;
+}
+
+/* Table styling for history page */
+table {
+    border-collapse: collapse;
+    width: 90%;
+    margin: auto;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+}
+th {
+    background: #0077b6;
+    color: white;
 }

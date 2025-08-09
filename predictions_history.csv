@@ -1,2 +1,8 @@
+<<<<<<< HEAD
 id,ThermalCond,SourceTemp,AmbientTemp,BlockSize,MaxTemp,AvgTemp,CenterTemp,Efficiency,Status,Timestamp
 1,100.0,60.0,25.0,20.0,b'\x1ePlB',b'\xa7\xa7\x13B',b'|\x12gB',b'\x85\xeb\x19B',✅ Medium – Good performance,2025-08-09 14:22:01
+=======
+thermal_cond,source_temp,ambient_temp,block_size,pred_max,pred_avg,pred_center
+100.0,70.0,35.0,50.0,b'\x04\xef}B',b'\x9a\xbe0B',b'\x94\x87\x84B'
+100.0,60.0,35.0,25.0,b'\x8a\x16bB',b'\xda\xd0(B',b'\xe7`gB'
+>>>>>>> c1862a4 (Added history.html and fixed templates)

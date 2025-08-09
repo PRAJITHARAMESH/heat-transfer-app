@@ -1,0 +1,14 @@
+import sqlite3
+import pandas as pd
+
+# Connect to the database
+conn = sqlite3.connect("predictions.db")
+
+# Read the data from the table
+df = pd.read_sql_query("SELECT * FROM predictions", conn)
+
+# Save as CSV
+df.to_csv("history_export.csv", index=False)
+
+conn.close()
+print("✅ History exported to history_export.csv successfully!")

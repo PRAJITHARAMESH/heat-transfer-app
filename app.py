@@ -1,142 +1,80 @@
-from flask import Flask, render_template, request
-import joblib
+from flask import Flask, render_template, request, send_file
 import sqlite3
-import datetime
+import pandas as pd
+import os
+import joblib
 
-# -----------------------------
-# Flask App Initialization
-# -----------------------------
 app = Flask(__name__)
 
-# Load model and scaler
+# Load ML model & scaler
 model = joblib.load("model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-# Parameter limits
-LIMITS = {
-    "ThermalCond": (80, 400),
-    "SourceTemp": (40, 75),
-    "AmbientTemp": (15, 35),
-    "BlockSize": (5, 50)
-}
+# Create DB table if not exists
+conn = sqlite3.connect("predictions.db")
+c = conn.cursor()
+c.execute('''CREATE TABLE IF NOT EXISTS predictions
+             (thermal_cond REAL, source_temp REAL, ambient_temp REAL, block_size REAL,
+              pred_max REAL, pred_avg REAL, pred_center REAL)''')
+conn.commit()
+conn.close()
 
-# -----------------------------
-# Database Setup
-# -----------------------------
-def init_db():
+# ---------- HOME PAGE ----------
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    if request.method == 'POST':
+        return predict()
+    return render_template('index.html')
+
+# ---------- PREDICT ----------
+def predict():
+    # Form data
+    thermal_cond = float(request.form['thermal_cond'])
+    source_temp = float(request.form['source_temp'])
+    ambient_temp = float(request.form['ambient_temp'])
+    block_size = float(request.form['block_size'])
+
+    # Scale & predict
+    features = scaler.transform([[thermal_cond, source_temp, ambient_temp, block_size]])
+    pred_max, pred_avg, pred_center = model.predict(features)[0]
+
+    # Save to DB
     conn = sqlite3.connect("predictions.db")
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS history (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    thermal_cond REAL,
-                    source_temp REAL,
-                    ambient_temp REAL,
-                    block_size REAL,
-                    max_temp REAL,
-                    avg_temp REAL,
-                    center_temp REAL,
-                    efficiency REAL,
-                    status TEXT,
-                    timestamp TEXT
-                )''')
+    c.execute("INSERT INTO predictions VALUES (?, ?, ?, ?, ?, ?, ?)",
+              (thermal_cond, source_temp, ambient_temp, block_size,
+               pred_max, pred_avg, pred_center))
     conn.commit()
     conn.close()
 
-init_db()
+    return render_template('index.html',
+                           prediction_max=round(pred_max, 2),
+                           prediction_avg=round(pred_avg, 2),
+                           prediction_center=round(pred_center, 2))
 
-# -----------------------------
-# Function to check limits
-# -----------------------------
-def check_limits(inputs):
-    names = ["ThermalCond", "SourceTemp", "AmbientTemp", "BlockSize"]
-    out = [n for n, v in zip(names, inputs) if not (LIMITS[n][0] <= v <= LIMITS[n][1])]
-    return out
-
-# -----------------------------
-# Home Route
-# -----------------------------
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-# -----------------------------
-# Prediction Route
-# -----------------------------
-@app.route('/predict', methods=['POST'])
-def predict():
-    try:
-        # Read inputs
-        inputs = [
-            float(request.form['thermalcond']),
-            float(request.form['sourcetemp']),
-            float(request.form['ambienttemp']),
-            float(request.form['blocksize'])
-        ]
-
-        # Validate limits
-        out_of_range = check_limits(inputs)
-        if out_of_range:
-            return render_template('index.html', error=f"⚠️ Out of range values: {', '.join(out_of_range)}")
-
-        # Scale inputs
-        input_scaled = scaler.transform([inputs])
-        prediction = model.predict(input_scaled)[0]  # MaxTemp, AvgTemp, CenterTemp
-        max_temp, avg_temp, center_temp = prediction
-
-        # Status logic
-        if avg_temp < 30:
-            status = "❄️ Low – No coolant needed"
-        elif 30 <= avg_temp <= 45 and max_temp < 75:
-            status = "✅ Medium – Good performance"
-        elif avg_temp > 45 and max_temp < 75:
-            status = "⚠️ Medium High – Acceptable but monitor"
-        elif avg_temp > 45 and max_temp >= 75:
-            status = "🚨 High – Coolant Required"
-        else:
-            status = "❓ Uncertain"
-
-        # Efficiency calculation
-        efficiency = round((inputs[1] - avg_temp) / inputs[1] * 100, 2)
-        if efficiency < -100:
-            efficiency_display = "Overheating"
-        else:
-            efficiency_display = f"{efficiency}%"
-
-        # Save to DB
-        conn = sqlite3.connect("predictions.db")
-        c = conn.cursor()
-        c.execute('''INSERT INTO history 
-                     (thermal_cond, source_temp, ambient_temp, block_size, max_temp, avg_temp, center_temp, efficiency, status, timestamp)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                  (*inputs, max_temp, avg_temp, center_temp, efficiency, status, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        conn.commit()
-        conn.close()
-
-        return render_template('index.html',
-                               result=True,
-                               max_temp=round(max_temp, 2),
-                               avg_temp=round(avg_temp, 2),
-                               center_temp=round(center_temp, 2),
-                               efficiency=efficiency_display,
-                               status=status)
-
-    except Exception as e:
-        return render_template('index.html', error=f"❌ Error: {str(e)}")
-
-# -----------------------------
-# History Route
-# -----------------------------
-@app.route('/history')
+# ---------- HISTORY PAGE ----------
+@app.route('/history', methods=['GET'])
 def history():
     conn = sqlite3.connect("predictions.db")
-    c = conn.cursor()
-    c.execute("SELECT * FROM history ORDER BY id DESC LIMIT 20")
-    rows = c.fetchall()
+    df = pd.read_sql_query("SELECT * FROM predictions", conn)
     conn.close()
-    return render_template('history.html', rows=rows)
+    return render_template('history.html', tables=[df.to_html(classes='data', header="true", index=False)])
 
-# -----------------------------
-# Run App
-# -----------------------------
-if __name__ == '__main__':
+# ---------- DOWNLOAD CSV ----------
+@app.route('/download_history', methods=['GET'])
+def download_history():
+    csv_file = "predictions_history.csv"
+
+    conn = sqlite3.connect("predictions.db")
+    df = pd.read_sql_query("SELECT * FROM predictions", conn)
+    conn.close()
+
+    if df.empty:
+        return "No history found yet!"
+
+    df.to_csv(csv_file, index=False)
+    return send_file(csv_file, as_attachment=True)
+
+# ---------- RUN ----------
+if __name__ == "__main__":
     app.run(debug=True)

@@ -1,29 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Heat Transfer App</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CapStone ML - Heat Transfer Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
-<center>
-    <h2>🔥Capstone ML with Heat Transfer Predictor</h2>
-<center>
+    <h2>CapStone ML with Heat Transfer Predictor</h2>
 
-    <form method="POST" action="/predict">
-        <input type="number" name="thermalcond" placeholder="Thermal Conductivity" required><br>
-        <input type="number" name="sourcetemp" placeholder="Source Temperature" required><br>
-        <input type="number" name="ambienttemp" placeholder="Ambient Temperature" required><br>
-        <input type="number" name="blocksize" placeholder="Block Size" required><br>
+    {% if warning %}
+        <p class="warning">{{ warning }}</p>
+    {% endif %}
+
+    <form method="post" action="/">
+        <label>Thermal Conductivity:</label>
+        <input type="number" name="thermal_cond" step="0.01" required><br>
+
+        <label>Source Temperature:</label>
+        <input type="number" name="source_temp" step="0.01" required><br>
+
+        <label>Ambient Temperature:</label>
+        <input type="number" name="ambient_temp" step="0.01" required><br>
+
+        <label>Block Size:</label>
+        <input type="number" name="block_size" step="0.01" required><br>
+
         <input type="submit" value="Predict">
     </form>
 
-    {% if result %}
-        <h3>Max Temp: {{ max_temp }} °C</h3>
-        <h3>Avg Temp: {{ avg_temp }} °C</h3>
-        <h3>Center Temp: {{ center_temp }} °C</h3>
-        <h3>Efficiency: {{ efficiency }}%</h3>
-        <h3>Status: {{ status }}</h3>
+    {% if prediction_max %}
+        <h3>Prediction:</h3>
+        <p><strong>Max Temp:</strong> {{ prediction_max }}</p>
+        <p><strong>Avg Temp:</strong> {{ prediction_avg }}</p>
+        <p><strong>Center Temp:</strong> {{ prediction_center }}</p>
     {% endif %}
+
+    <br>
+    <a href="/history" class="button">📜 View Prediction History</a>
+    <a href="/download_history" class="button">⬇ Download CSV</a>
 </body>
 </html>
