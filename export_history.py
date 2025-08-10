@@ -1,14 +1,36 @@
 import sqlite3
 import pandas as pd
+import os
+from datetime import datetime
 
-# Connect DB
-conn = sqlite3.connect("predictions.db")
+DB_FILE = "predictions.db"   # Database file name
+EXPORT_FILE = f"history_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"  # CSV with timestamp
 
-# Read table
-df = pd.read_sql_query("SELECT * FROM predictions", conn)
+# Check if database file exists
+if not os.path.exists(DB_FILE):
+    print(f"❌ Database file '{DB_FILE}' not found!")
+else:
+    try:
+        # Connect to the database
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
 
-# Export CSV
-df.to_csv("predictions_history.csv", index=False)
+        # Check if 'predictions' table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='predictions'")
+        if cursor.fetchone() is None:
+            print("❌ Table 'predictions' not found in database.")
+        else:
+            # Read table data sorted by ID in descending order
+            df = pd.read_sql_query("SELECT * FROM predictions ORDER BY id DESC", conn)
 
-conn.close()
-print("✅ History exported to predictions_history.csv")
+            if df.empty:
+                print("⚠️ No data found in 'predictions' table.")
+            else:
+                # Save to CSV
+                df.to_csv(EXPORT_FILE, index=False)
+                print(f"✅ Exported {len(df)} rows to '{EXPORT_FILE}'")
+
+        conn.close()
+
+    except Exception as e:
+        print(f"❌ Error: {e}")

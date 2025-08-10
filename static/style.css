@@ -1,72 +1,86 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
+    margin: 20px auto;
+    max-width: 700px;
+    background: #f9f9f9;
     text-align: center;
-    padding: 20px;
 }
 
-h2 {
-    color: #023e8a;
+h1 {
+    color: #333;
+    margin-bottom: 20px;
 }
 
-label {
-    font-weight: bold;
-    display: inline-block;
-    width: 200px;
-    text-align: right;
-}
-
-input[type="number"] {
-    padding: 6px;
-    margin: 5px;
+form input, form button {
+    display: block;
+    width: 90%;
+    margin: 10px auto;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 5px;
     border: 1px solid #ccc;
-    border-radius: 4px;
 }
 
-input[type="submit"] {
-    background-color: #0077b6;
+form button {
+    background-color: #28a745;
     color: white;
-    padding: 10px 20px;
     border: none;
-    border-radius: 6px;
     cursor: pointer;
 }
 
-input[type="submit"]:hover {
-    background-color: #023e8a;
+form button:hover {
+    background-color: #218838;
 }
 
-a.button {
-    display: inline-block;
-    background: #023e8a;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 6px;
-    margin-top: 15px;
+.cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
 }
 
-a.button:hover {
-    background: #0077b6;
+.card {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    width: 180px;
 }
 
-.warning {
-    color: red;
-    font-weight: bold;
+.card h3 {
+    margin-bottom: 10px;
+    color: #007BFF;
 }
 
-/* Table styling for history page */
 table {
+    width: 100%;
     border-collapse: collapse;
-    width: 90%;
-    margin: auto;
+    margin-top: 20px;
+    background: white;
 }
+
 th, td {
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
     padding: 8px;
-    text-align: center;
 }
+
 th {
-    background: #0077b6;
+    background-color: #28a745;
     color: white;
+}
+
+a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+button {
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
 }

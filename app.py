@@ -1,80 +1,118 @@
-from flask import Flask, render_template, request, send_file
-import sqlite3
-import pandas as pd
-import os
+from flask import Flask, render_template, request, redirect, url_for, send_file
 import joblib
+import numpy as np
+import pandas as pd
+import io
 
 app = Flask(__name__)
 
-# Load ML model & scaler
-model = joblib.load("model.pkl")
-scaler = joblib.load("scaler.pkl")
+# Load model and scaler from model.pkl
+model_data = joblib.load("model.pkl")
+if isinstance(model_data, dict):
+    model = model_data["model"]
+    scaler = model_data["scaler"]
+else:
+    model = model_data
+    scaler = None
 
-# Create DB table if not exists
-conn = sqlite3.connect("predictions.db")
-c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS predictions
-             (thermal_cond REAL, source_temp REAL, ambient_temp REAL, block_size REAL,
-              pred_max REAL, pred_avg REAL, pred_center REAL)''')
-conn.commit()
-conn.close()
+history = []
 
-# ---------- HOME PAGE ----------
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    if request.method == 'POST':
-        return predict()
-    return render_template('index.html')
+def calculate_efficiency(max_temp):
+    base_efficiency = 100
+    penalty = max(0, (max_temp - 50) * 2)
+    return round(max(0, base_efficiency - penalty), 2)
 
-# ---------- PREDICT ----------
-def predict():
-    # Form data
-    thermal_cond = float(request.form['thermal_cond'])
-    source_temp = float(request.form['source_temp'])
-    ambient_temp = float(request.form['ambient_temp'])
-    block_size = float(request.form['block_size'])
+def coolant_suggestion(efficiency):
+    if efficiency > 80:
+        return "Water - Efficient coolant"
+    elif efficiency > 60:
+        return "Oil - Moderate coolant"
+    elif efficiency > 40:
+        return "Special Coolant - Use for high temps"
+    else:
+        return "Extreme Coolant - Urgently needed"
 
-    # Scale & predict
-    features = scaler.transform([[thermal_cond, source_temp, ambient_temp, block_size]])
-    pred_max, pred_avg, pred_center = model.predict(features)[0]
+def metal_recommendation(max_temp):
+    if max_temp < 50:
+        return "Aluminum - Good heat dissipation"
+    elif max_temp < 70:
+        return "Copper - Better heat conduction"
+    else:
+        return "Silver or Copper Alloys - Best for very high heat"
 
-    # Save to DB
-    conn = sqlite3.connect("predictions.db")
-    c = conn.cursor()
-    c.execute("INSERT INTO predictions VALUES (?, ?, ?, ?, ?, ?, ?)",
-              (thermal_cond, source_temp, ambient_temp, block_size,
-               pred_max, pred_avg, pred_center))
-    conn.commit()
-    conn.close()
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        try:
+            thermal = float(request.form["thermal"])
+            source = float(request.form["source"])
+            ambient = float(request.form["ambient"])
+            block_size = float(request.form["block_size"])
 
-    return render_template('index.html',
-                           prediction_max=round(pred_max, 2),
-                           prediction_avg=round(pred_avg, 2),
-                           prediction_center=round(pred_center, 2))
+            features = np.array([[thermal, source, ambient, block_size]])
+            if scaler:
+                features = scaler.transform(features)
 
-# ---------- HISTORY PAGE ----------
-@app.route('/history', methods=['GET'])
-def history():
-    conn = sqlite3.connect("predictions.db")
-    df = pd.read_sql_query("SELECT * FROM predictions", conn)
-    conn.close()
-    return render_template('history.html', tables=[df.to_html(classes='data', header="true", index=False)])
+            preds = model.predict(features)
+            max_temp = round(preds[0][0], 2)
+            avg_temp = round(preds[0][1], 2)
+            center_temp = round(preds[0][2], 2)
 
-# ---------- DOWNLOAD CSV ----------
-@app.route('/download_history', methods=['GET'])
-def download_history():
-    csv_file = "predictions_history.csv"
+            efficiency = calculate_efficiency(max_temp)
+            coolant = coolant_suggestion(efficiency)
+            material = metal_recommendation(max_temp)
 
-    conn = sqlite3.connect("predictions.db")
-    df = pd.read_sql_query("SELECT * FROM predictions", conn)
-    conn.close()
+            status = "Good" if efficiency > 70 else ("Moderate" if efficiency > 40 else "Poor")
 
-    if df.empty:
-        return "No history found yet!"
+            result = {
+                "max_temp": max_temp,
+                "avg_temp": avg_temp,
+                "center_temp": center_temp,
+                "efficiency": efficiency,
+                "coolant": coolant,
+                "material": material,
+                "status": status
+            }
 
-    df.to_csv(csv_file, index=False)
-    return send_file(csv_file, as_attachment=True)
+            # Save to history
+            history.append({
+                "Thermal Cond": thermal,
+                "Source Temp": source,
+                "Ambient Temp": ambient,
+                "Block Size": block_size,
+                "Max Temp": max_temp,
+                "Avg Temp": avg_temp,
+                "Center Temp": center_temp,
+                "Efficiency": efficiency,
+                "Coolant": coolant,
+                "Material": material,
+                "Status": status
+            })
 
-# ---------- RUN ----------
+            return render_template("result.html", prediction=result)
+        except Exception as e:
+            return render_template("index.html", error=str(e), history=history)
+    else:
+        return render_template("index.html", history=history)
+
+@app.route("/history")
+def show_history():
+    return render_template("history.html", history=history)
+
+@app.route("/download")
+def download():
+    if not history:
+        return redirect(url_for("index"))
+
+    df = pd.DataFrame(history)
+    output = io.StringIO()
+    df.to_csv(output, index=False)
+    output.seek(0)
+
+    return send_file(io.BytesIO(output.getvalue().encode()),
+                     mimetype="text/csv",
+                     download_name="history.csv",
+                     as_attachment=True)
+
 if __name__ == "__main__":
     app.run(debug=True)

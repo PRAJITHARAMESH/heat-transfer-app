@@ -1,43 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CapStone ML - Heat Transfer Predictor</title>
+    <title>Thermal Prediction</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h2>CapStone ML with Heat Transfer Predictor</h2>
-
-    {% if warning %}
-        <p class="warning">{{ warning }}</p>
+    <h1>Thermal Prediction System</h1>
+    {% if error %}
+    <p style="color:red;">Error: {{ error }}</p>
     {% endif %}
-
-    <form method="post" action="/">
-        <label>Thermal Conductivity:</label>
-        <input type="number" name="thermal_cond" step="0.01" required><br>
-
-        <label>Source Temperature:</label>
-        <input type="number" name="source_temp" step="0.01" required><br>
-
-        <label>Ambient Temperature:</label>
-        <input type="number" name="ambient_temp" step="0.01" required><br>
-
-        <label>Block Size:</label>
-        <input type="number" name="block_size" step="0.01" required><br>
-
-        <input type="submit" value="Predict">
+    <form method="POST">
+        <input type="number" step="0.01" name="thermal" placeholder="Thermal Conductivity" required>
+        <input type="number" step="0.01" name="source" placeholder="Source Temperature" required>
+        <input type="number" step="0.01" name="ambient" placeholder="Ambient Temperature" required>
+        <input type="number" step="0.01" name="block_size" placeholder="Block Size" required>
+        <button type="submit">Predict</button>
     </form>
-
-    {% if prediction_max %}
-        <h3>Prediction:</h3>
-        <p><strong>Max Temp:</strong> {{ prediction_max }}</p>
-        <p><strong>Avg Temp:</strong> {{ prediction_avg }}</p>
-        <p><strong>Center Temp:</strong> {{ prediction_center }}</p>
-    {% endif %}
-
-    <br>
-    <a href="/history" class="button">📜 View Prediction History</a>
-    <a href="/download_history" class="button">⬇ Download CSV</a>
+    <p><a href="{{ url_for('show_history') }}">View Prediction History</a></p>
 </body>
 </html>

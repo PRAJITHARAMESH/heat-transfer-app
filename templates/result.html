@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediction Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Prediction Result</h1>
+    <div class="cards">
+        <div class="card">
+            <h3>Max Temperature</h3>
+            <p>{{ prediction.max_temp }} °C</p>
+        </div>
+        <div class="card">
+            <h3>Average Temperature</h3>
+            <p>{{ prediction.avg_temp }} °C</p>
+        </div>
+        <div class="card">
+            <h3>Center Temperature</h3>
+            <p>{{ prediction.center_temp }} °C</p>
+        </div>
+        <div class="card">
+            <h3>Efficiency</h3>
+            <p>{{ prediction.efficiency }}%</p>
+        </div>
+        <div class="card">
+            <h3>Suggested Coolant</h3>
+            <p>{{ prediction.coolant }}</p>
+        </div>
+        <div class="card">
+            <h3>Recommended Material</h3>
+            <p>{{ prediction.material }}</p>
+        </div>
+        <div class="card">
+            <h3>Status</h3>
+            <p>{{ prediction.status }}</p>
+        </div>
+    </div>
+    <p><a href="{{ url_for('index') }}">🔙 Back to Input</a></p>
+    <p><a href="{{ url_for('show_history') }}">View History</a></p>
+</body>
+</html>
