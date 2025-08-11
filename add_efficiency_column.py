@@ -1,14 +1,24 @@
+# add_efficiency_column.py
 import sqlite3
+import pandas as pd
+import os
 
-conn = sqlite3.connect("predictions.db")
-cursor = conn.cursor()
+DB = "predictions.db"
+if not os.path.exists(DB):
+    print("DB not found.")
+    raise SystemExit
 
-# Add efficiency column if it doesn't exist
-try:
-    cursor.execute("ALTER TABLE predictions ADD COLUMN efficiency REAL;")
-    print("✅ Column 'efficiency' added successfully.")
-except Exception as e:
-    print("⚠️", e)
+conn = sqlite3.connect(DB)
+df = pd.read_sql_query("SELECT * FROM predictions", conn)
 
-conn.commit()
+if "Efficiency" not in df.columns:
+    df["Efficiency"] = (df["SourceTemp"] - df["AvgTemp"]) / df["SourceTemp"] * 100
+    df.to_sql("predictions_temp", conn, index=False, if_exists="replace")
+    c = conn.cursor()
+    c.execute("DROP TABLE predictions")
+    c.execute("ALTER TABLE predictions_temp RENAME TO predictions")
+    conn.commit()
+    print("Efficiency column added.")
+else:
+    print("Efficiency column already present.")
 conn.close()

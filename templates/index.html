@@ -1,39 +1,37 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Heat Transfer Rate Prediction</title>
+    <meta charset="utf-8">
+    <title>Heat Transfer Predictor</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Heat Transfer Rate Prediction</h1>
+    <h1>CapStone ML — Heat Transfer Predictor</h1>
 
-        <form method="POST">
-            <label>Thermal Conductivity (W/mK)</label>
-            <input type="text" name="thermal_cond" placeholder="Example: 200" required>
+    {% if warning %}
+        <p class="warning">{{ warning }}</p>
+    {% endif %}
 
-            <label>Source Temperature (°C)</label>
-            <input type="text" name="source_temp" placeholder="Example: 60" required>
+    <form method="post" action="/">
+        <label>Thermal Conductivity (W/m·K):</label>
+        <input type="number" name="thermal_cond" step="0.01" required>
 
-            <label>Block Size (mm)</label>
-            <input type="text" name="block_size" placeholder="Example: 25" required>
+        <label>Source Temperature (°C):</label>
+        <input type="number" name="source_temp" step="0.01" required>
 
-            <label>Ambient Temperature (°C)</label>
-            <input type="text" name="ambient_temp" placeholder="Example: 30" required>
+        <label>Ambient Temperature (°C):</label>
+        <input type="number" name="ambient_temp" step="0.01" required>
 
-            <button type="submit">Predict</button>
-        </form>
+        <label>Block Size (mm):</label>
+        <input type="number" name="block_size" step="0.01" required>
 
-        {% if prediction %}
-        <div class="card">
-            <h2>Prediction Result</h2>
-            <p><b>Heat Transfer Rate:</b> {{ prediction }}</p>
-            <p><b>Efficiency:</b> {{ efficiency }}%</p>
-            <p><b>Coolant Suggestion:</b> {{ coolant }}</p>
-            <p><b>Material Suggestion:</b> {{ material }}</p>
-            <a href="/download" class="btn">Download CSV</a>
-        </div>
-        {% endif %}
+        <button type="submit">Predict</button>
+    </form>
+
+    <div style="margin-top:20px;">
+        <a class="button" href="{{ url_for('history') }}">📜 View Prediction History</a>
+        <a class="button" href="{{ url_for('download_history') }}">⬇ Download CSV</a>
     </div>
 </body>
 </html>

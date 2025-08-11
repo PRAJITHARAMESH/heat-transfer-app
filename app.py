@@ -1,93 +1,107 @@
+# app.py
 from flask import Flask, render_template, request, send_file
-import numpy as np
-import pickle
+import sqlite3
 import pandas as pd
-import io
+import os
+import joblib
+from datetime import datetime
 
 app = Flask(__name__)
 
-# Load model & scaler
-model = pickle.load(open("model.pkl", "rb"))
-scaler = pickle.load(open("scaler.pkl", "rb"))
+MODEL_FILE = "model.pkl"
+SCALER_FILE = "scaler.pkl"
+DB_FILE = "predictions.db"
 
-# Store last prediction for download
-last_result = {}
+if not os.path.exists(MODEL_FILE) or not os.path.exists(SCALER_FILE):
+    raise FileNotFoundError("Run train_model.py first to create model.pkl and scaler.pkl")
 
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    global last_result
-    prediction = None
-    efficiency = None
-    coolant_suggestion = None
-    material_suggestion = None
+model = joblib.load(MODEL_FILE)
+scaler = joblib.load(SCALER_FILE)
 
-    if request.method == 'POST':
+LIMITS = {
+    "ThermalCond": (80, 400),
+    "SourceTemp": (40, 75),
+    "AmbientTemp": (15, 35),
+    "BlockSize": (5, 50)
+}
+
+def check_limits(inputs):
+    names = ["ThermalCond","SourceTemp","AmbientTemp","BlockSize"]
+    return [n for n,v in zip(names, inputs) if not (LIMITS[n][0] <= v <= LIMITS[n][1])]
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    warning = None
+    if request.method == "POST":
         try:
-            # Get inputs
-            thermal_cond = float(request.form['thermal_cond'])
-            source_temp = float(request.form['source_temp'])
-            block_size = float(request.form['block_size'])
-            ambient_temp = float(request.form['ambient_temp'])
+            tc = float(request.form["thermal_cond"])
+            st = float(request.form["source_temp"])
+            at = float(request.form["ambient_temp"])
+            bs = float(request.form["block_size"])
+        except Exception:
+            warning = "Please enter valid numbers."
+            return render_template("index.html", warning=warning)
 
-            # Prepare data
-            features = np.array([[thermal_cond, source_temp, block_size, ambient_temp]])
-            scaled_features = scaler.transform(features)
+        out_of_range = check_limits([tc, st, at, bs])
+        if out_of_range:
+            warning = f"Out of range: {', '.join(out_of_range)}"
+            return render_template("index.html", warning=warning)
 
-            # Prediction
-            prediction = model.predict(scaled_features)[0]
+        Xs = scaler.transform([[tc, st, at, bs]])
+        pred = model.predict(Xs)[0]
+        max_temp, avg_temp, center_temp = float(pred[0]), float(pred[1]), float(pred[2])
 
-            # Efficiency % (example formula)
-            efficiency = round((source_temp - ambient_temp) / source_temp * 100, 2)
+        efficiency = round((st - avg_temp) / st * 100, 2) if st != 0 else None
+        eff_text = "Overheating" if (efficiency is not None and efficiency < -100) else (f"{efficiency}%" if efficiency is not None else "N/A")
 
-            # Coolant suggestion
-            if prediction > 500:
-                coolant_suggestion = "High-performance coolant"
-            elif prediction > 200:
-                coolant_suggestion = "Standard coolant"
-            else:
-                coolant_suggestion = "No coolant needed"
+        if avg_temp < 30:
+            status = "Low – No coolant"
+        elif 30 <= avg_temp <= 45 and max_temp < 75:
+            status = "Medium – Good"
+        elif avg_temp > 45 and max_temp < 75:
+            status = "Medium-High – Monitor"
+        else:
+            status = "High – Coolant required"
 
-            # Material suggestion
-            if thermal_cond > 150:
-                material_suggestion = "Copper or Aluminum"
-            else:
-                material_suggestion = "Steel or Brass"
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO predictions (ThermalCond, SourceTemp, AmbientTemp, BlockSize,
+                                     MaxTemp, AvgTemp, CenterTemp, Efficiency, Status, Timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (tc, st, at, bs, max_temp, avg_temp, center_temp, efficiency, status, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()
+        conn.close()
 
-            # Store for download
-            last_result = {
-                "Thermal Conductivity (W/mK)": thermal_cond,
-                "Source Temperature (°C)": source_temp,
-                "Block Size (mm)": block_size,
-                "Ambient Temperature (°C)": ambient_temp,
-                "Predicted Heat Transfer Rate": prediction,
-                "Efficiency (%)": efficiency,
-                "Coolant Suggestion": coolant_suggestion,
-                "Material Suggestion": material_suggestion
-            }
+        result = {
+            "MaxTemp": round(max_temp,2),
+            "AvgTemp": round(avg_temp,2),
+            "CenterTemp": round(center_temp,2),
+            "Efficiency": eff_text,
+            "Status": status
+        }
+        return render_template("result.html", result=result)
 
-        except Exception as e:
-            prediction = f"Error: {e}"
+    return render_template("index.html", warning=warning)
 
-    return render_template(
-        'index.html',
-        prediction=prediction,
-        efficiency=efficiency,
-        coolant=coolant_suggestion,
-        material=material_suggestion
-    )
+@app.route("/history")
+def history():
+    conn = sqlite3.connect(DB_FILE)
+    df = pd.read_sql_query("SELECT * FROM predictions ORDER BY Timestamp DESC LIMIT 200", conn)
+    conn.close()
+    rows = df.to_dict(orient="records")
+    return render_template("history.html", history=rows)
 
-@app.route('/download')
-def download():
-    global last_result
-    if not last_result:
-        return "No prediction available to download."
+@app.route("/download_history")
+def download_history():
+    csv_file = "predictions_history.csv"
+    conn = sqlite3.connect(DB_FILE)
+    df = pd.read_sql_query("SELECT * FROM predictions ORDER BY Timestamp DESC", conn)
+    conn.close()
+    if df.empty:
+        return "No history found yet!"
+    df.to_csv(csv_file, index=False)
+    return send_file(csv_file, as_attachment=True)
 
-    df = pd.DataFrame([last_result])
-    output = io.BytesIO()
-    df.to_csv(output, index=False)
-    output.seek(0)
-
-    return send_file(output, as_attachment=True, download_name="heat_transfer_prediction.csv", mimetype='text/csv')
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

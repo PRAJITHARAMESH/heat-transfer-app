@@ -1,39 +1,22 @@
 <!-- templates/result.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heat Transfer Prediction - Results</title>
+    <meta charset="utf-8">
+    <title>Prediction Result</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Heat Transfer Prediction Results</h1>
+    <h1>Prediction Result</h1>
 
-        <h2>Input Details</h2>
-        <ul>
-            <li><strong>Thermal Conductivity:</strong> {{ thermal_conductivity }} W/mK</li>
-            <li><strong>Source Temperature:</strong> {{ source_temp }} °C</li>
-            <li><strong>Block Size:</strong> {{ block_size }} m³</li>
-            <li><strong>Ambient Temperature:</strong> {{ ambient_temp }} °C</li>
-            <li><strong>Max Temperature:</strong> {{ max_temp }} °C</li>
-            <li><strong>Average Temperature:</strong> {{ avg_temp }} °C</li>
-            <li><strong>Center Temperature:</strong> {{ center_temp }} °C</li>
-        </ul>
-
-        <h2>Prediction Outputs</h2>
-        <ul>
-            <li><strong>Heat Transfer Rate:</strong> {{ heat_transfer_rate }} W</li>
-            <li><strong>Efficiency:</strong> {{ efficiency }} %</li>
-            <li><strong>Coolant Status:</strong> {{ coolant_status }}</li>
-            <li><strong>Recommended Material:</strong> {{ recommended_material }}</li>
-        </ul>
-
-        <div class="buttons">
-            <a href="{{ url_for('download_results') }}" class="btn">Download Results</a>
-            <a href="{{ url_for('history') }}" class="btn">View History</a>
-        </div>
+    <div class="card">
+        <p><strong>Max Temp:</strong> {{ result.MaxTemp }} °C</p>
+        <p><strong>Avg Temp:</strong> {{ result.AvgTemp }} °C</p>
+        <p><strong>Center Temp:</strong> {{ result.CenterTemp }} °C</p>
+        <p><strong>Efficiency:</strong> {{ result.Efficiency }}</p>
+        <p><strong>Status:</strong> {{ result.Status }}</p>
     </div>
+
+    <p><a class="button" href="{{ url_for('index') }}">🔙 Back</a> <a class="button" href="{{ url_for('history') }}">📜 History</a></p>
 </body>
 </html>

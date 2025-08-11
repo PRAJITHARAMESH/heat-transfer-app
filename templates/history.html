@@ -1,17 +1,38 @@
+<!-- templates/history.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8">
     <title>Prediction History</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h2>📜 Prediction History</h2>
-        <a href="/download_history" class="button">⬇ Download CSV (All)</a>
-        <a href="/" class="button">🏠 Back to Home</a>
-        <br><br>
-        {{ tables|safe }}
-    </div>
+    <h1>Prediction History</h1>
+
+    {% if history %}
+    <table>
+        <thead>
+            <tr>
+                {% for col in history[0].keys() %}
+                <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in history %}
+            <tr>
+                {% for val in row.values() %}
+                <td>{{ val }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p><a class="button" href="{{ url_for('download_history') }}">⬇ Download CSV</a></p>
+    {% else %}
+    <p>No history available yet.</p>
+    {% endif %}
+
+    <p><a class="button" href="{{ url_for('index') }}">🔙 Back to Input</a></p>
 </body>
 </html>
