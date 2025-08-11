@@ -1,118 +1,93 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file
-import joblib
+from flask import Flask, render_template, request, send_file
 import numpy as np
+import pickle
 import pandas as pd
 import io
 
 app = Flask(__name__)
 
-# Load model and scaler from model.pkl
-model_data = joblib.load("model.pkl")
-if isinstance(model_data, dict):
-    model = model_data["model"]
-    scaler = model_data["scaler"]
-else:
-    model = model_data
-    scaler = None
+# Load model & scaler
+model = pickle.load(open("model.pkl", "rb"))
+scaler = pickle.load(open("scaler.pkl", "rb"))
 
-history = []
+# Store last prediction for download
+last_result = {}
 
-def calculate_efficiency(max_temp):
-    base_efficiency = 100
-    penalty = max(0, (max_temp - 50) * 2)
-    return round(max(0, base_efficiency - penalty), 2)
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    global last_result
+    prediction = None
+    efficiency = None
+    coolant_suggestion = None
+    material_suggestion = None
 
-def coolant_suggestion(efficiency):
-    if efficiency > 80:
-        return "Water - Efficient coolant"
-    elif efficiency > 60:
-        return "Oil - Moderate coolant"
-    elif efficiency > 40:
-        return "Special Coolant - Use for high temps"
-    else:
-        return "Extreme Coolant - Urgently needed"
-
-def metal_recommendation(max_temp):
-    if max_temp < 50:
-        return "Aluminum - Good heat dissipation"
-    elif max_temp < 70:
-        return "Copper - Better heat conduction"
-    else:
-        return "Silver or Copper Alloys - Best for very high heat"
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    if request.method == "POST":
+    if request.method == 'POST':
         try:
-            thermal = float(request.form["thermal"])
-            source = float(request.form["source"])
-            ambient = float(request.form["ambient"])
-            block_size = float(request.form["block_size"])
+            # Get inputs
+            thermal_cond = float(request.form['thermal_cond'])
+            source_temp = float(request.form['source_temp'])
+            block_size = float(request.form['block_size'])
+            ambient_temp = float(request.form['ambient_temp'])
 
-            features = np.array([[thermal, source, ambient, block_size]])
-            if scaler:
-                features = scaler.transform(features)
+            # Prepare data
+            features = np.array([[thermal_cond, source_temp, block_size, ambient_temp]])
+            scaled_features = scaler.transform(features)
 
-            preds = model.predict(features)
-            max_temp = round(preds[0][0], 2)
-            avg_temp = round(preds[0][1], 2)
-            center_temp = round(preds[0][2], 2)
+            # Prediction
+            prediction = model.predict(scaled_features)[0]
 
-            efficiency = calculate_efficiency(max_temp)
-            coolant = coolant_suggestion(efficiency)
-            material = metal_recommendation(max_temp)
+            # Efficiency % (example formula)
+            efficiency = round((source_temp - ambient_temp) / source_temp * 100, 2)
 
-            status = "Good" if efficiency > 70 else ("Moderate" if efficiency > 40 else "Poor")
+            # Coolant suggestion
+            if prediction > 500:
+                coolant_suggestion = "High-performance coolant"
+            elif prediction > 200:
+                coolant_suggestion = "Standard coolant"
+            else:
+                coolant_suggestion = "No coolant needed"
 
-            result = {
-                "max_temp": max_temp,
-                "avg_temp": avg_temp,
-                "center_temp": center_temp,
-                "efficiency": efficiency,
-                "coolant": coolant,
-                "material": material,
-                "status": status
+            # Material suggestion
+            if thermal_cond > 150:
+                material_suggestion = "Copper or Aluminum"
+            else:
+                material_suggestion = "Steel or Brass"
+
+            # Store for download
+            last_result = {
+                "Thermal Conductivity (W/mK)": thermal_cond,
+                "Source Temperature (°C)": source_temp,
+                "Block Size (mm)": block_size,
+                "Ambient Temperature (°C)": ambient_temp,
+                "Predicted Heat Transfer Rate": prediction,
+                "Efficiency (%)": efficiency,
+                "Coolant Suggestion": coolant_suggestion,
+                "Material Suggestion": material_suggestion
             }
 
-            # Save to history
-            history.append({
-                "Thermal Cond": thermal,
-                "Source Temp": source,
-                "Ambient Temp": ambient,
-                "Block Size": block_size,
-                "Max Temp": max_temp,
-                "Avg Temp": avg_temp,
-                "Center Temp": center_temp,
-                "Efficiency": efficiency,
-                "Coolant": coolant,
-                "Material": material,
-                "Status": status
-            })
-
-            return render_template("result.html", prediction=result)
         except Exception as e:
-            return render_template("index.html", error=str(e), history=history)
-    else:
-        return render_template("index.html", history=history)
+            prediction = f"Error: {e}"
 
-@app.route("/history")
-def show_history():
-    return render_template("history.html", history=history)
+    return render_template(
+        'index.html',
+        prediction=prediction,
+        efficiency=efficiency,
+        coolant=coolant_suggestion,
+        material=material_suggestion
+    )
 
-@app.route("/download")
+@app.route('/download')
 def download():
-    if not history:
-        return redirect(url_for("index"))
+    global last_result
+    if not last_result:
+        return "No prediction available to download."
 
-    df = pd.DataFrame(history)
-    output = io.StringIO()
+    df = pd.DataFrame([last_result])
+    output = io.BytesIO()
     df.to_csv(output, index=False)
     output.seek(0)
 
-    return send_file(io.BytesIO(output.getvalue().encode()),
-                     mimetype="text/csv",
-                     download_name="history.csv",
-                     as_attachment=True)
+    return send_file(output, as_attachment=True, download_name="heat_transfer_prediction.csv", mimetype='text/csv')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)

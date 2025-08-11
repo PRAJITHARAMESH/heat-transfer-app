@@ -1,42 +1,39 @@
+<!-- templates/result.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Prediction Result</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat Transfer Prediction - Results</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Prediction Result</h1>
-    <div class="cards">
-        <div class="card">
-            <h3>Max Temperature</h3>
-            <p>{{ prediction.max_temp }} °C</p>
-        </div>
-        <div class="card">
-            <h3>Average Temperature</h3>
-            <p>{{ prediction.avg_temp }} °C</p>
-        </div>
-        <div class="card">
-            <h3>Center Temperature</h3>
-            <p>{{ prediction.center_temp }} °C</p>
-        </div>
-        <div class="card">
-            <h3>Efficiency</h3>
-            <p>{{ prediction.efficiency }}%</p>
-        </div>
-        <div class="card">
-            <h3>Suggested Coolant</h3>
-            <p>{{ prediction.coolant }}</p>
-        </div>
-        <div class="card">
-            <h3>Recommended Material</h3>
-            <p>{{ prediction.material }}</p>
-        </div>
-        <div class="card">
-            <h3>Status</h3>
-            <p>{{ prediction.status }}</p>
+    <div class="container">
+        <h1>Heat Transfer Prediction Results</h1>
+
+        <h2>Input Details</h2>
+        <ul>
+            <li><strong>Thermal Conductivity:</strong> {{ thermal_conductivity }} W/mK</li>
+            <li><strong>Source Temperature:</strong> {{ source_temp }} °C</li>
+            <li><strong>Block Size:</strong> {{ block_size }} m³</li>
+            <li><strong>Ambient Temperature:</strong> {{ ambient_temp }} °C</li>
+            <li><strong>Max Temperature:</strong> {{ max_temp }} °C</li>
+            <li><strong>Average Temperature:</strong> {{ avg_temp }} °C</li>
+            <li><strong>Center Temperature:</strong> {{ center_temp }} °C</li>
+        </ul>
+
+        <h2>Prediction Outputs</h2>
+        <ul>
+            <li><strong>Heat Transfer Rate:</strong> {{ heat_transfer_rate }} W</li>
+            <li><strong>Efficiency:</strong> {{ efficiency }} %</li>
+            <li><strong>Coolant Status:</strong> {{ coolant_status }}</li>
+            <li><strong>Recommended Material:</strong> {{ recommended_material }}</li>
+        </ul>
+
+        <div class="buttons">
+            <a href="{{ url_for('download_results') }}" class="btn">Download Results</a>
+            <a href="{{ url_for('history') }}" class="btn">View History</a>
         </div>
     </div>
-    <p><a href="{{ url_for('index') }}">🔙 Back to Input</a></p>
-    <p><a href="{{ url_for('show_history') }}">View History</a></p>
 </body>
 </html>

@@ -1,21 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Thermal Prediction</title>
+    <title>Heat Transfer Rate Prediction</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Thermal Prediction System</h1>
-    {% if error %}
-    <p style="color:red;">Error: {{ error }}</p>
-    {% endif %}
-    <form method="POST">
-        <input type="number" step="0.01" name="thermal" placeholder="Thermal Conductivity" required>
-        <input type="number" step="0.01" name="source" placeholder="Source Temperature" required>
-        <input type="number" step="0.01" name="ambient" placeholder="Ambient Temperature" required>
-        <input type="number" step="0.01" name="block_size" placeholder="Block Size" required>
-        <button type="submit">Predict</button>
-    </form>
-    <p><a href="{{ url_for('show_history') }}">View Prediction History</a></p>
+    <div class="container">
+        <h1>Heat Transfer Rate Prediction</h1>
+
+        <form method="POST">
+            <label>Thermal Conductivity (W/mK)</label>
+            <input type="text" name="thermal_cond" placeholder="Example: 200" required>
+
+            <label>Source Temperature (°C)</label>
+            <input type="text" name="source_temp" placeholder="Example: 60" required>
+
+            <label>Block Size (mm)</label>
+            <input type="text" name="block_size" placeholder="Example: 25" required>
+
+            <label>Ambient Temperature (°C)</label>
+            <input type="text" name="ambient_temp" placeholder="Example: 30" required>
+
+            <button type="submit">Predict</button>
+        </form>
+
+        {% if prediction %}
+        <div class="card">
+            <h2>Prediction Result</h2>
+            <p><b>Heat Transfer Rate:</b> {{ prediction }}</p>
+            <p><b>Efficiency:</b> {{ efficiency }}%</p>
+            <p><b>Coolant Suggestion:</b> {{ coolant }}</p>
+            <p><b>Material Suggestion:</b> {{ material }}</p>
+            <a href="/download" class="btn">Download CSV</a>
+        </div>
+        {% endif %}
+    </div>
 </body>
 </html>
